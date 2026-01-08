@@ -1,6 +1,7 @@
 import supabase from './supbase-client.js'
 import {useState, useEffect } from "react";
 import { Chart } from 'react-charts'  // Fixed import - removed lowercase 'chart'
+import Form from './Form.jsx'
 
 function Dashboard() {
 
@@ -172,6 +173,7 @@ function Dashboard() {
                     )}
                 </div>
             </div>
+            <Form metrics={metrics} />
         </div>
     );
 }
