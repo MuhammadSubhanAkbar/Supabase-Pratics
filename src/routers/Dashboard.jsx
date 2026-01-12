@@ -1,7 +1,7 @@
-import supabase from './supbase-client.js'
+import supabase from '../supbase-client.js'
 import {useState, useEffect } from "react";
 import { Chart } from 'react-charts'  // Fixed import - removed lowercase 'chart'
-import Form from './Form.jsx'
+import Form from '../components/Form.jsx'
 
 function Dashboard() {
 
