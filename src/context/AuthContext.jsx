@@ -26,10 +26,12 @@ export const AuthContextProvider = ({ children }) => {
 
         getInitalSession();
 
-        //2. Listen for auth state changes
+        //2. Listen for auth state changes (it uses .onAuthStateChange)
         const { data: authListener } = supabase.auth.onAuthStateChange(
-            (_event, session)=>{
+            (event, session)=>{
                 setSession(session);
+                console.log("Session changed:", session)
+
             }
         );
 
@@ -50,6 +52,7 @@ export const AuthContextProvider = ({ children }) => {
     );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
     return useContext(AuthContext);
 };
