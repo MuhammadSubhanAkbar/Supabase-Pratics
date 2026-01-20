@@ -3,86 +3,61 @@ import supabase from '../supbase-client.js';
 
 function Form({ metrics }) {
     const [error, submitAction, isPending] = useActionState(
-        async (previousState, formData) => {
+        async (_, formData) => {
             const name = formData.get('name');
-            const amount = Number(formData.get('value'));
+            const amount = Math.round(Number(formData.get('value')));
 
-            // 1️⃣ Get current value
+            if (!name || amount <= 0) {
+                return new Error('Enter a valid amount');
+            }
+
             const { data, error: fetchError } = await supabase
-                .from('sales_deals')
+                .from('sale_deals')
                 .select('value')
                 .eq('name', name)
                 .single();
 
-            if (fetchError) {
-                console.error('Fetch error:', fetchError.message);
-                return new Error('Failed to fetch current deal value');
-            }
+            if (fetchError) return new Error(fetchError.message);
 
-            // 2️⃣ Update with incremented value
+            const newValue = data.value + amount;
+
             const { error: updateError } = await supabase
-                .from('sales_deals')
-                .update({ value: 'value'})
+                .from('sale_deals')
+                .update({ value: newValue })
                 .eq('name', name);
 
-            if (updateError) {
-                console.error('Update error:', updateError.message);
-                return new Error('Failed to update deal value');
-            }
+            if (updateError) return new Error(updateError.message);
 
             return null;
         },
         null
     );
 
-    const generateOptions = () =>
-        metrics.map((metric) => (
-            <option key={metric.name} value={metric.name}>
-                {metric.name}
-            </option>
-        ));
-
     return (
-        <div className="add-form-container">
-            <form action={submitAction} aria-label="Add new sales deal">
-                <label htmlFor="deal-name">
-                    Name:
-                    <select
-                        id="deal-name"
-                        name="name"
-                        defaultValue={metrics?.[0]?.name || ''}
-                        disabled={isPending}
-                        aria-invalid={!!error}
-                    >
-                        {generateOptions()}
-                    </select>
-                </label>
+        <form action={submitAction}>
+            <select name="name">
+                {metrics.map(m => (
+                    <option key={m.name} value={m.name}>
+                        {m.name}
+                    </option>
+                ))}
+            </select>
 
-                <label htmlFor="deal-value">
-                    Amount: $
-                    <input
-                        id="deal-value"
-                        type="number"
-                        name="value"
-                        defaultValue={0}
-                        min="0"
-                        step="10"
-                        disabled={isPending}
-                        aria-invalid={!!error}
-                    />
-                </label>
+            <input
+                type="number"
+                name="value"
+                min="0"
+                step="1"
+                placeholder="Amount"
+                className="pr-2.5"
+            />
 
-                <button type="submit" disabled={isPending}>
-                    {isPending ? 'Adding...' : 'Add Deal'}
-                </button>
-            </form>
+            <button disabled={isPending}>
+                {isPending ? 'Updating...' : 'Add'}
+            </button>
 
-            {error && (
-                <div role="alert" className="error-message">
-                    {error.message}
-                </div>
-            )}
-        </div>
+            {error && <p>{error.message}</p>}
+        </form>
     );
 }
 
