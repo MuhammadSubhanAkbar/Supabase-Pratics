@@ -1,16 +1,40 @@
-import { useAuth } from "../context/AuthContext.jsx"
+import { useActionState } from 'react';
 
-const SignIn = () => {
+const Signin = () => {
+    const [error, submitAction, isPending] = useActionState(
+        async (previousState, formData) => {
+            const email = formData.get('email');
+            const password = formData.get('password');
 
-    const { session } = useAuth();
+            try {
+                //2. Call our sign-in function
+                // const {
+                //   success,
+                //   data,
+                //   error: signInError,
+                // } = await sign in function (email, password);
 
+                if (signInError) {
+                    return new Error(signInError);
+                }
+                if (success && data?.session) {
+                    //Navigate to /dashboard
+                    return null;
+                }
+                return null;
+            } catch (error) {
+                console.error('Sign in error: ', error.message);
+                return new Error('An unexpected error occurred. Please try again.');
+            }
+        }, null
+    );
 
     return (
         <>
             <h1 className="landing-header">Paper Like A Boss</h1>
             <div className="sign-form-container">
                 <form
-                    //action=
+                    action={submitAction}
                     aria-label="Sign in form"
                     aria-describedby="form-description"
                 >
@@ -36,9 +60,9 @@ const SignIn = () => {
                         placeholder=""
                         required
                         aria-required="true"
-                        //aria-invalid=
-                        //aria-describedby=
-                        //disabled=
+                        aria-invalid={error ? 'true' : 'false'}
+                        aria-describedby={error ? 'signin-error' : undefined}
+                        disabled={isPending}
                     />
 
                     <label htmlFor="password">Password</label>
@@ -50,25 +74,33 @@ const SignIn = () => {
                         placeholder=""
                         required
                         aria-required="true"
-                        //aria-invalid=
-                        //aria-describedby=
-                        //disabled=
+                        aria-invalid={error ? 'true' : 'false'}
+                        aria-describedby={error ? 'signin-error' : undefined}
+                        disabled={isPending}
                     />
 
                     <button
                         type="submit"
                         className="form-button"
-                        //className=
-                        //aria-busy=
+                        className="form-button"
+                        aria-busy={isPending}
                     >
-                        Sign In
-                        {/*'Signing in...' when pending*/}
+                        {isPending ? 'Signing in' : 'Sign In'}
                     </button>
 
-                    {/* Error message */}
+                    {error && (
+                        <div
+                            id="signin-error"
+                            role="alert"
+                            className="sign-form-error-message"
+                        >
+                            {error.message}
+                        </div>
+                    )}
                 </form>
             </div>
         </>
-    )
-}
-export default SignIn
+    );
+};
+
+export default Signin;
