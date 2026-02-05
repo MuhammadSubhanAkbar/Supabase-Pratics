@@ -1,100 +1,76 @@
 import { useActionState } from 'react';
+import { useAuth } from '../context/AuthContext';
+
 
 const Signin = () => {
-    const [error, submitAction, isPending] = useActionState(
+    const { signInUser } = useAuth();
+
+    const [errorMessage, submitAction, isPending] = useActionState(
         async (previousState, formData) => {
             const email = formData.get('email');
             const password = formData.get('password');
 
-            try {
-                //2. Call our sign-in function
-                // const {
-                //   success,
-                //   data,
-                //   error: signInError,
-                // } = await sign in function (email, password);
+            const { success, error: signInError } = await signInUser(email, password);
 
-                if (signInError) {
-                    return new Error(signInError);
-                }
-                if (success && data?.session) {
-                    //Navigate to /dashboard
-                    return null;
-                }
-                return null;
-            } catch (error) {
-                console.error('Sign in error: ', error.message);
-                return new Error('An unexpected error occurred. Please try again.');
+            if (!success) {
+                // This string becomes the "errorMessage" variable
+                return signInError;
             }
-        }, null
+
+            // Navigation happens here on success
+            console.log("Login successful!");
+            // navigate('/dashboard');
+
+            return null;
+        },
+        null // Initial error state
     );
 
     return (
         <>
             <h1 className="landing-header">Paper Like A Boss</h1>
             <div className="sign-form-container">
-                <form
-                    action={submitAction}
-                    aria-label="Sign in form"
-                    aria-describedby="form-description"
-                >
-                    <div id="form-description" className="sr-only">
-                        Use this form to sign in to your account. Enter your email and
-                        password.
-                    </div>
-
+                <form action={submitAction} className="auth-form">
                     <h2 className="form-title">Sign in</h2>
                     <p>
-                        Don't have an account yet?{' '}
-                        {/*<Link className="form-link">*/}
-                        Sign up
-                        {/*</Link>*/}
+                        Don't have an account yet? <strong>Sign up</strong>
                     </p>
 
-                    <label htmlFor="email">Email</label>
-                    <input
-                        className="form-input"
-                        type="email"
-                        name="email"
-                        id="email"
-                        placeholder=""
-                        required
-                        aria-required="true"
-                        aria-invalid={error ? 'true' : 'false'}
-                        aria-describedby={error ? 'signin-error' : undefined}
-                        disabled={isPending}
-                    />
+                    <div className="input-group">
+                        <label htmlFor="email">Email</label>
+                        <input
+                            className="form-input"
+                            type="email"
+                            name="email"
+                            id="email"
+                            required
+                            disabled={isPending}
+                        />
+                    </div>
 
-                    <label htmlFor="password">Password</label>
-                    <input
-                        className="form-input"
-                        type="password"
-                        name="password"
-                        id="password"
-                        placeholder=""
-                        required
-                        aria-required="true"
-                        aria-invalid={error ? 'true' : 'false'}
-                        aria-describedby={error ? 'signin-error' : undefined}
-                        disabled={isPending}
-                    />
+                    <div className="input-group">
+                        <label htmlFor="password">Password</label>
+                        <input
+                            className="form-input"
+                            type="password"
+                            name="password"
+                            id="password"
+                            required
+                            disabled={isPending}
+                        />
+                    </div>
 
                     <button
                         type="submit"
+                        disabled={isPending}
                         className="form-button"
-                        className="form-button"
-                        aria-busy={isPending}
                     >
-                        {isPending ? 'Signing in' : 'Sign In'}
+                        {isPending ? 'Signing in...' : 'Sign In'}
                     </button>
 
-                    {error && (
-                        <div
-                            id="signin-error"
-                            role="alert"
-                            className="sign-form-error-message"
-                        >
-                            {error.message}
+                    {errorMessage && (
+                        <div role="alert" className="sign-form-error-message">
+                            {errorMessage}
                         </div>
                     )}
                 </form>
