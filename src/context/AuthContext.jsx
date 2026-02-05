@@ -4,55 +4,49 @@ import supabase from '../supbase-client.js';
 const AuthContext = createContext();
 
 export const AuthContextProvider = ({ children }) => {
-//Session state (user info, sign-in status)
+    // undefined = loading, null = no user, object = user logged in
     const [session, setSession] = useState(undefined);
 
     useEffect(() => {
-        //1. Check initial session
-        const getInitalSession = async () => {
-            try {
-                const { data, error } = await supabase.auth.getSession();
-
-                if (error) {
-                    throw error;
-                }
-
-                console.log(data.session)
-                setSession(data.session);
-            }catch (error) {
-                console.error("Error is getting session:", error.message);
-            }
+        // 1. Get initial session
+        const getInitialSession = async () => {
+            const { data: { session }, error } = await supabase.auth.getSession();
+            if (error) console.error('Error fetching session:', error.message);
+            setSession(session);
         };
 
-        getInitalSession();
+        getInitialSession();
 
-        //2. Listen for auth state changes (it uses .onAuthStateChange)
-        const { data: authListener } = supabase.auth.onAuthStateChange(
-            (event, session)=>{
-                setSession(session);
-                console.log("Session changed:", session)
+        // 2. Listen for auth changes (sign in, sign out, etc.)
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            setSession(session);
+        });
 
-            }
-        );
-
-        return (
-            authListener.subscription.unsubscribe()
-        )
-
-
+        // 3. Cleanup subscription on unmount
+        return () => subscription.unsubscribe();
     }, []);
 
-//Auth functions (sign-in, signup, logout)
+    const signInUser = async (email, password) => {
+        try {
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email: email.toLowerCase(),
+                password: password,
+            });
 
+            if (error) return { success: false, error: error.message };
+            return { success: true, data };
+        } catch (err) {
+            return { success: false, error: 'An unexpected error occurred.' };
+        }
+    };
+
+    const signOutUser = () => supabase.auth.signOut();
 
     return (
-        <AuthContext.Provider value={{ session }}>
+        <AuthContext.Provider value={{ session, signInUser, signOutUser }}>
             {children}
         </AuthContext.Provider>
     );
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
-export const useAuth = () => {
-    return useContext(AuthContext);
-};
+export const useAuth = () => useContext(AuthContext);
